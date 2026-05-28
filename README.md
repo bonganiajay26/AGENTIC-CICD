@@ -1,25 +1,37 @@
 # Agentic AI CI/CD — Golden Template
 
-> **Clone once. Run one command. Get a complete, production-grade CI/CD pipeline for any application on any cloud.**
+> **One command. Any application. Any cloud. Complete production-grade CI/CD pipeline generated automatically.**
 
 ---
 
-## Quickstart
+## Two ways to use this
+
+### Starting a new project
 
 ```bash
-# 1. Clone this repo into your project  (or use it as a GitHub Template)
 git clone https://github.com/bonganiajay26/AGENTIC-CICD.git
 cd AGENTIC-CICD
-
-# 2. Install the single generator dependency
 pip install -r requirements-generator.txt
-
-# 3. Run the interactive wizard — answers a few questions, generates everything
 python generate_cicd.py --init
 ```
 
-That's it. The wizard detects your language, builds your registry URL, writes
-`cicd.config.yaml`, and generates all 35+ pipeline files automatically.
+### Adding to your existing project
+
+```bash
+# From your existing project root — download just the generator
+curl -O https://raw.githubusercontent.com/bonganiajay26/AGENTIC-CICD/main/generate_cicd.py
+curl -O https://raw.githubusercontent.com/bonganiajay26/AGENTIC-CICD/main/requirements-generator.txt
+pip install -r requirements-generator.txt
+python generate_cicd.py --init
+```
+
+Your existing source code, tests, and config files are **never overwritten**.
+See **[INTEGRATE_EXISTING_PROJECT.md](INTEGRATE_EXISTING_PROJECT.md)** for the full guide.
+
+---
+
+The wizard auto-detects your language, builds your cloud registry URL, writes
+`cicd.config.yaml`, and generates all 35+ pipeline files in under 3 seconds.
 
 ---
 
@@ -207,6 +219,17 @@ Click **"Use this template"** on GitHub to create your own copy, then run:
 pip install -r requirements-generator.txt
 python generate_cicd.py --init
 ```
+
+---
+
+## Documentation
+
+| Guide | What it covers |
+|-------|---------------|
+| [INTEGRATE_EXISTING_PROJECT.md](INTEGRATE_EXISTING_PROJECT.md) | **Adding this pipeline to your existing project** — 3 methods, what is safe vs overwritten, per-language walkthroughs, adapting evals |
+| [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md) | Step-by-step execution — prerequisites → setup → generate → local dev → secrets → cluster bootstrap → CI → staging → production canary → monitoring → rollback |
+| [HOW_IT_WORKS.md](HOW_IT_WORKS.md) | Plain-English implementation deep-dive — every component explained, full data-flow diagram, why each design decision was made |
+| [CLAUDE.md](CLAUDE.md) | Quick reference — commands, secrets list, re-generate workflow |
 
 ---
 
