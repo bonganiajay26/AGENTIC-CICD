@@ -226,10 +226,11 @@ python generate_cicd.py --init
 
 | Guide | What it covers |
 |-------|---------------|
-| [INTEGRATE_EXISTING_PROJECT.md](INTEGRATE_EXISTING_PROJECT.md) | **Adding this pipeline to your existing project** — 3 methods, what is safe vs overwritten, per-language walkthroughs, adapting evals |
-| [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md) | Step-by-step execution — prerequisites → setup → generate → local dev → secrets → cluster bootstrap → CI → staging → production canary → monitoring → rollback |
-| [HOW_IT_WORKS.md](HOW_IT_WORKS.md) | Plain-English implementation deep-dive — every component explained, full data-flow diagram, why each design decision was made |
-| [CLAUDE.md](CLAUDE.md) | Quick reference — commands, secrets list, re-generate workflow |
+| [PRE_EXECUTION_GUIDE.md](PRE_EXECUTION_GUIDE.md) | **Read this first** — prerequisites checklist, what changes, cost impact, known issues & fixes, full undo guide |
+| [INTEGRATE_EXISTING_PROJECT.md](INTEGRATE_EXISTING_PROJECT.md) | **Existing project** — 3 integration methods, safe vs overwritten files, per-language walkthroughs |
+| [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md) | **Step-by-step execution** — generate → local dev → secrets → cluster bootstrap → CI → staging → production canary → rollback |
+| [HOW_IT_WORKS.md](HOW_IT_WORKS.md) | **Deep dive** — every component explained, full data-flow diagram, design decisions |
+| [CLAUDE.md](CLAUDE.md) | **Quick reference** — all commands, secrets list, re-generate workflow |
 
 ---
 
