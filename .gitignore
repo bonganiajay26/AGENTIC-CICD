@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+reports/
+.env
+.env.*
+secrets.yaml
+*-secret.yaml
+*.pem
+*.key
+.DS_Store
+.kube/
+kubeconfig
+node_modules/
+target/
+build/
+dist/
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json

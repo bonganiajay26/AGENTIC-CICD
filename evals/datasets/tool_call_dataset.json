@@ -1,0 +1,96 @@
+[
+  {
+    "prompt": "What is the weather in London right now?",
+    "tools": [
+      {
+        "name": "get_weather",
+        "description": "Get current weather for a city",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": {"type": "string", "description": "City name"},
+            "units": {"type": "string", "enum": ["celsius", "fahrenheit"], "default": "celsius"}
+          },
+          "required": ["city"]
+        }
+      },
+      {
+        "name": "search_web",
+        "description": "Search the web",
+        "input_schema": {
+          "type": "object",
+          "properties": {"query": {"type": "string"}},
+          "required": ["query"]
+        }
+      }
+    ],
+    "expected": {
+      "tool_name": "get_weather",
+      "expected_input": {"city": "London"}
+    }
+  },
+  {
+    "prompt": "Search for the latest news about Kubernetes",
+    "tools": [
+      {
+        "name": "get_weather",
+        "description": "Get current weather for a city",
+        "input_schema": {
+          "type": "object",
+          "properties": {"city": {"type": "string"}},
+          "required": ["city"]
+        }
+      },
+      {
+        "name": "search_web",
+        "description": "Search the web for information",
+        "input_schema": {
+          "type": "object",
+          "properties": {"query": {"type": "string", "description": "Search query"}},
+          "required": ["query"]
+        }
+      }
+    ],
+    "expected": {
+      "tool_name": "search_web",
+      "expected_input": {}
+    }
+  },
+  {
+    "prompt": "Send an email to john@example.com with subject 'Meeting tomorrow'",
+    "tools": [
+      {
+        "name": "send_email",
+        "description": "Send an email",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "to": {"type": "string"},
+            "subject": {"type": "string"},
+            "body": {"type": "string"}
+          },
+          "required": ["to", "subject", "body"]
+        }
+      },
+      {
+        "name": "create_calendar_event",
+        "description": "Create a calendar event",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {"type": "string"},
+            "date": {"type": "string"}
+          },
+          "required": ["title", "date"]
+        }
+      }
+    ],
+    "expected": {
+      "tool_name": "send_email",
+      "expected_input": {
+        "to": "john@example.com",
+        "subject": "Meeting tomorrow"
+      }
+    }
+  }
+]

@@ -1,0 +1,106 @@
+# ============================================================
+#  GOLDEN CI/CD CONFIG — edit this file, then run:
+#    python generate_cicd.py
+#  Everything else is auto-generated. Works for any app + cloud.
+# ============================================================
+
+# ── Application ─────────────────────────────────────────────
+app:
+  name: my-app                   # k8s resource name, image name (lowercase, hyphens only)
+  language: auto                 # auto | python | node | java | go | dotnet | generic
+  port: 8080                     # container HTTP port
+  health_path: /health           # liveness + readiness probe path
+  test_command: ""               # leave empty for language default
+  # python default  → pytest tests/unit/ -v --junitxml=reports/unit-test-results.xml
+  # node default    → npm test -- --ci
+  # java default    → mvn test
+  # go default      → go test ./... -v
+  # dotnet default  → dotnet test
+
+# ── Cloud & Registry ────────────────────────────────────────
+cloud:
+  provider: aws                  # aws | gcp | azure | generic
+
+  # AWS
+  aws:
+    region: us-east-1
+    account_id: "123456789012"   # used to build ECR URL
+    # Registry URL auto-built: <account_id>.dkr.ecr.<region>.amazonaws.com/<app.name>
+    # Auth: OIDC via AWS_ROLE_ARN secret (recommended) or ACCESS_KEY + SECRET_ACCESS_KEY
+    auth_method: oidc            # oidc | access_key
+
+  # GCP
+  gcp:
+    project_id: my-gcp-project
+    region: us-central1
+    # Registry URL auto-built: gcr.io/<project_id>/<app.name>
+    # Auth: Workload Identity Federation (recommended) or service account key
+    auth_method: workload_identity   # workload_identity | service_account_key
+    artifact_registry: false         # true = use Artifact Registry instead of GCR
+
+  # Azure
+  azure:
+    registry_name: myacr         # ACR name (without .azurecr.io)
+    # Registry URL auto-built: <registry_name>.azurecr.io/<app.name>
+    # Auth: AZURE_CREDENTIALS secret (service principal JSON)
+
+  # Generic (any registry with username/password)
+  generic:
+    registry_url: registry.example.com
+    # Auth: REGISTRY_USERNAME + REGISTRY_PASSWORD secrets
+
+# ── Kubernetes ──────────────────────────────────────────────
+kubernetes:
+  cluster_type: eks              # eks | gke | aks | generic
+  # Auth via KUBE_CONFIG secret (base64 kubeconfig) for all cluster types
+
+  staging:
+    namespace: staging
+    replicas: 1
+    cpu_request: "100m"
+    cpu_limit: "500m"
+    memory_request: "256Mi"
+    memory_limit: "1Gi"
+
+  production:
+    namespace: production
+    replicas: 4
+    cpu_request: "500m"
+    cpu_limit: "2000m"
+    memory_request: "1Gi"
+    memory_limit: "4Gi"
+    canary:
+      enabled: true
+      steps: [10, 30, 60, 100]   # traffic weights (%)
+      pause_duration: "5m"        # pause between each step
+      traffic_router: nginx       # nginx | alb | istio
+
+# ── GitOps ──────────────────────────────────────────────────
+gitops:
+  repo: "YOUR_ORG/YOUR_GITOPS_REPO"   # can be same as app repo
+  branch: main
+
+# ── ArgoCD ──────────────────────────────────────────────────
+argocd:
+  staging_auto_sync: true        # ArgoCD auto-syncs staging on manifest change
+  production_auto_sync: false    # production = manual sync only (safety)
+
+# ── AI Eval Gates ───────────────────────────────────────────
+evals:
+  enabled: true                  # false = skip all eval gates (non-AI apps)
+  judge_model: claude-sonnet-4-6
+
+  thresholds:
+    prompt_regression:    0.90   # ≥ fraction of cases passing
+    tool_call_validation: 0.95   # ≥ fraction of tool calls correct
+    rag_retrieval:        0.85   # ≥ composite relevance + faithfulness
+    hallucination_max:    0.05   # ≤ fraction hallucinating (5%)
+    safety:               0.98   # ≥ fraction passing safety check
+    latency_p95_ms:    15000     # ≤ ms
+    latency_p99_ms:    30000     # ≤ ms
+    avg_tokens:         2000     # ≤ average tokens per request
+
+# ── Notifications (optional) ────────────────────────────────
+notifications:
+  slack_webhook: false           # set to true + add SLACK_WEBHOOK secret
+  github_issues_on_rollback: true

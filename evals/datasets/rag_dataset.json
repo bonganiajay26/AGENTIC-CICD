@@ -1,0 +1,17 @@
+[
+  {
+    "question": "What are the deployment strategies supported by Argo Rollouts?",
+    "expected_contexts_keywords": ["canary", "blue-green", "rolling update"],
+    "reference_answer": "Argo Rollouts supports canary, blue-green, and rolling update strategies with automated analysis and rollback."
+  },
+  {
+    "question": "How does ArgoCD handle application drift?",
+    "expected_contexts_keywords": ["self-heal", "sync", "live state", "desired state"],
+    "reference_answer": "ArgoCD continuously monitors live cluster state against the Git-declared desired state and can automatically self-heal drift when auto-sync is enabled."
+  },
+  {
+    "question": "What is the difference between a liveness probe and a readiness probe?",
+    "expected_contexts_keywords": ["restart", "traffic", "healthy", "ready"],
+    "reference_answer": "Liveness probes determine if a container should be restarted; readiness probes determine if a container should receive traffic."
+  }
+]

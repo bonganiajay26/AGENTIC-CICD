@@ -1,0 +1,19 @@
+# Core AI SDK
+anthropic>=0.40.0
+
+# Web framework (swap for FastAPI/Flask as needed)
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# HTTP client (for RAG live-mode calls)
+httpx>=0.28.0
+
+# Eval tooling
+pyyaml>=6.0.2
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+
+# Observability
+opentelemetry-sdk>=1.29.0
+opentelemetry-instrumentation-fastapi>=0.50b0
+prometheus-client>=0.21.0

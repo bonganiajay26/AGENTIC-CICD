@@ -1,0 +1,32 @@
+[
+  {
+    "prompt": "What is the purpose of a readiness probe in Kubernetes?",
+    "expected_answer": "A readiness probe determines when a container is ready to accept traffic. Kubernetes only routes requests to pods that pass the readiness probe.",
+    "ground_truth": "Readiness probes tell Kubernetes when a pod is ready to receive traffic. A pod that fails readiness is removed from service endpoints until it recovers.",
+    "category": "kubernetes"
+  },
+  {
+    "prompt": "What does GitOps mean?",
+    "expected_answer": "GitOps is a practice where the desired state of infrastructure and applications is declared in Git, and automated tooling reconciles the running state to match the Git state.",
+    "ground_truth": "GitOps uses Git as the single source of truth for declarative infrastructure and applications, with automated agents continuously reconciling live state to the desired state in Git.",
+    "category": "devops"
+  },
+  {
+    "prompt": "What is a canary deployment?",
+    "expected_answer": "A canary deployment gradually rolls out a new version to a small subset of users first, monitors for errors or regressions, then progressively increases traffic if health checks pass.",
+    "ground_truth": "Canary deployments route a small percentage of production traffic to a new version, allowing teams to catch regressions early before full rollout.",
+    "category": "deployment"
+  },
+  {
+    "prompt": "What is RAG in the context of AI?",
+    "expected_answer": "RAG (Retrieval-Augmented Generation) combines a retrieval system with an LLM. The retrieval step fetches relevant documents, which are then provided as context to the LLM to improve accuracy and reduce hallucination.",
+    "ground_truth": "RAG retrieves relevant documents from a knowledge base and provides them as context to an LLM, grounding responses in up-to-date factual information.",
+    "category": "ai"
+  },
+  {
+    "prompt": "What is prompt regression testing?",
+    "expected_answer": "Prompt regression testing checks that the AI agent continues to produce correct answers on a curated set of known questions when the model, prompt, or configuration changes.",
+    "ground_truth": "Prompt regression tests compare current agent outputs against golden reference answers to detect regressions caused by prompt changes, model updates, or config drift.",
+    "category": "ai-testing"
+  }
+]

@@ -1,0 +1,3 @@
+# Only needed to RUN the generator (generate_cicd.py).
+# Your application's own dependencies go in requirements.txt.
+PyYAML>=6.0.2
