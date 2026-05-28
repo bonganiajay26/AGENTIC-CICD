@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(if \\(-not \\(Test-Path \"C:\\\\Users\\\\ajayd\\\\AGENTIC AI-CICD\\\\.claude\"\\)\\) { New-Item -ItemType Directory -Path \"C:\\\\Users\\\\ajayd\\\\AGENTIC AI-CICD\\\\.claude\" })",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(docker build *)",
+      "Bash(git init *)",
+      "Bash(git checkout *)",
+      "Bash(gh repo *)",
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'docs: add step-by-step execution guide *)",
+      "Bash(python generate_cicd.py --detect)",
+      "Bash(gh api *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('is_template:', d.get\\('is_template'\\)\\)\")",
+      "Bash(git commit -m 'feat: add --init wizard + README for plug-and-play usage *)",
+      "Bash(python generate_cicd.py --init --output /tmp/demo-order-service)",
+      "Bash(cat /tmp/demo-order-service/cicd.config.yaml)",
+      "Bash(python generate_cicd.py --init)",
+      "Bash(git commit -m 'chore: restore default config after demo run *)"
+    ]
+  }
+}

@@ -16,6 +16,3 @@ node_modules/
 target/
 build/
 dist/
-
-# Local Claude Code settings (machine-specific)
-.claude/settings.local.json
