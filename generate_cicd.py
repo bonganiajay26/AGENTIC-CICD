@@ -2062,49 +2062,282 @@ dist/
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Interactive Setup Wizard
+# ─────────────────────────────────────────────────────────────────────────────
+
+def ask(prompt: str, default: str = "") -> str:
+    hint = f" [{default}]" if default else ""
+    try:
+        val = input(f"  {prompt}{hint}: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        sys.exit(0)
+    return val if val else default
+
+
+def ask_choice(prompt: str, options: list[tuple[str, str]], default: int = 1) -> str:
+    print(f"\n  {prompt}")
+    for i, (key, label) in enumerate(options, 1):
+        marker = " (default)" if i == default else ""
+        print(f"    {i}. {label}{marker}")
+    while True:
+        raw = ask("Select", str(default))
+        if raw.isdigit() and 1 <= int(raw) <= len(options):
+            return options[int(raw) - 1][0]
+        print(f"  Enter a number between 1 and {len(options)}")
+
+
+def ask_yn(prompt: str, default: bool = True) -> bool:
+    hint = "Y/n" if default else "y/N"
+    val = ask(f"{prompt} [{hint}]").lower()
+    if not val:
+        return default
+    return val.startswith("y")
+
+
+def wizard(output_dir: Path, config_path: Path) -> dict:
+    """Interactive wizard that builds cicd.config.yaml from user answers."""
+
+    print("\n" + "=" * 53)
+    print("  Golden CI/CD Generator — Interactive Setup")
+    print("=" * 53)
+    print("  Press Enter to accept defaults.\n")
+
+    # ── App ───────────────────────────────────────────────
+    print("--- App Configuration ---")
+    default_name = output_dir.name.lower().replace(" ", "-").replace("_", "-")
+    app_name     = ask("App name", default_name)
+    detected_lang = detect_language(output_dir)
+    lang_input   = ask(f"Language (python/node/java/go/dotnet/generic)", detected_lang)
+    language     = lang_input if lang_input in LANGUAGE_SIGNALS else detected_lang
+    port         = ask("Container port", "8080")
+    health_path  = ask("Health check path", "/health")
+
+    # ── Cloud ─────────────────────────────────────────────
+    cloud = ask_choice("Cloud provider", [
+        ("aws",     "AWS   (ECR + EKS)"),
+        ("gcp",     "GCP   (GCR / Artifact Registry + GKE)"),
+        ("azure",   "Azure (ACR + AKS)"),
+        ("generic", "Generic (any registry + kubeconfig)"),
+    ])
+
+    cloud_section: dict = {}
+
+    if cloud == "aws":
+        print("\n--- AWS Configuration ---")
+        account_id  = ask("AWS Account ID")
+        region      = ask("AWS Region", "us-east-1")
+        auth_method = ask_choice("Auth method", [
+            ("oidc",       "OIDC role (recommended — no long-lived keys)"),
+            ("access_key", "Access Key + Secret"),
+        ])
+        cloud_section = {"aws": {"region": region, "account_id": account_id, "auth_method": auth_method}}
+
+    elif cloud == "gcp":
+        print("\n--- GCP Configuration ---")
+        project_id  = ask("GCP Project ID")
+        region      = ask("GCP Region", "us-central1")
+        auth_method = ask_choice("Auth method", [
+            ("workload_identity", "Workload Identity Federation (recommended)"),
+            ("service_account_key", "Service Account JSON key"),
+        ])
+        use_ar = ask_yn("Use Artifact Registry instead of GCR?", False)
+        cloud_section = {"gcp": {"project_id": project_id, "region": region,
+                                  "auth_method": auth_method, "artifact_registry": use_ar}}
+
+    elif cloud == "azure":
+        print("\n--- Azure Configuration ---")
+        registry_name = ask("ACR registry name (without .azurecr.io)")
+        cloud_section = {"azure": {"registry_name": registry_name}}
+
+    else:
+        print("\n--- Generic Registry ---")
+        registry_url = ask("Registry URL (e.g. registry.example.com)")
+        cloud_section = {"generic": {"registry_url": registry_url}}
+
+    # ── Kubernetes ────────────────────────────────────────
+    print("\n--- Kubernetes ---")
+    cluster_map = {"aws": "eks", "gcp": "gke", "azure": "aks", "generic": "generic"}
+    cluster_default = cluster_map.get(cloud, "generic")
+    cluster_type = ask_choice("Cluster type", [
+        ("eks",     "EKS   (AWS)"),
+        ("gke",     "GKE   (GCP)"),
+        ("aks",     "AKS   (Azure)"),
+        ("generic", "Generic (any kubeconfig)"),
+    ], default=["eks","gke","aks","generic"].index(cluster_default) + 1)
+
+    staging_ns = ask("Staging namespace", "staging")
+    prod_ns    = ask("Production namespace", "production")
+    staging_replicas = ask("Staging replicas", "1")
+    prod_replicas    = ask("Production replicas", "4")
+
+    # ── GitOps ────────────────────────────────────────────
+    print("\n--- GitOps ---")
+    gitops_repo   = ask("GitOps repo (org/repo — can be this same repo)")
+    gitops_branch = ask("GitOps branch", "main")
+
+    # ── AI Evals ─────────────────────────────────────────
+    print("\n--- AI Eval Gates ---")
+    evals_enabled = ask_yn("Enable AI eval gates?", True)
+    judge_model   = "claude-sonnet-4-6"
+    if evals_enabled:
+        judge_model = ask("Judge model", "claude-sonnet-4-6")
+
+    # ── Summary ───────────────────────────────────────────
+    registry_preview = {
+        "aws":     f"{cloud_section.get('aws',{}).get('account_id','?')}.dkr.ecr.{cloud_section.get('aws',{}).get('region','?')}.amazonaws.com/{app_name}",
+        "gcp":     f"gcr.io/{cloud_section.get('gcp',{}).get('project_id','?')}/{app_name}",
+        "azure":   f"{cloud_section.get('azure',{}).get('registry_name','?')}.azurecr.io/{app_name}",
+        "generic": f"{cloud_section.get('generic',{}).get('registry_url','?')}/{app_name}",
+    }.get(cloud, "")
+
+    print("\n" + "-" * 53)
+    print("  Configuration Summary")
+    print("-" * 53)
+    print(f"  App name    : {app_name}")
+    print(f"  Language    : {language}")
+    print(f"  Port        : {port}")
+    print(f"  Cloud       : {cloud}")
+    print(f"  Registry    : {registry_preview[:48]}")
+    print(f"  Cluster     : {cluster_type}")
+    print(f"  Staging ns  : {staging_ns}")
+    print(f"  Prod ns     : {prod_ns}")
+    print(f"  GitOps repo : {gitops_repo}")
+    print(f"  Evals       : {'enabled' if evals_enabled else 'disabled'}")
+    print("-" * 53)
+
+    if not ask_yn("\n  Generate CI/CD pipeline now?", True):
+        print("  Aborted. Edit cicd.config.yaml manually and re-run.")
+        sys.exit(0)
+
+    # ── Build config dict ─────────────────────────────────
+    cfg = {
+        "app": {
+            "name": app_name,
+            "language": language,
+            "port": int(port),
+            "health_path": health_path,
+            "test_command": "",
+        },
+        "cloud": {"provider": cloud, **cloud_section},
+        "kubernetes": {
+            "cluster_type": cluster_type,
+            "staging": {
+                "namespace": staging_ns,
+                "replicas": int(staging_replicas),
+                "cpu_request": "100m", "cpu_limit": "500m",
+                "memory_request": "256Mi", "memory_limit": "1Gi",
+            },
+            "production": {
+                "namespace": prod_ns,
+                "replicas": int(prod_replicas),
+                "cpu_request": "500m", "cpu_limit": "2000m",
+                "memory_request": "1Gi", "memory_limit": "4Gi",
+                "canary": {"enabled": True, "steps": [10, 30, 60, 100],
+                           "pause_duration": "5m", "traffic_router": "nginx"},
+            },
+        },
+        "gitops": {"repo": gitops_repo, "branch": gitops_branch},
+        "argocd": {"staging_auto_sync": True, "production_auto_sync": False},
+        "evals": {
+            "enabled": evals_enabled,
+            "judge_model": judge_model,
+            "thresholds": {
+                "prompt_regression": 0.90,
+                "tool_call_validation": 0.95,
+                "rag_retrieval": 0.85,
+                "hallucination_max": 0.05,
+                "safety": 0.98,
+                "latency_p95_ms": 15000,
+                "latency_p99_ms": 30000,
+                "avg_tokens": 2000,
+            },
+        },
+        "notifications": {"slack_webhook": False, "github_issues_on_rollback": True},
+    }
+
+    # Write cicd.config.yaml
+    with open(config_path, "w") as f:
+        yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
+    print(f"\n  [ok] cicd.config.yaml written.")
+
+    return cfg
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Entry Point
 # ─────────────────────────────────────────────────────────────────────────────
 
+def print_banner(cfg: dict, output_dir: Path):
+    language = cfg["app"].get("language", "auto")
+    if language == "auto":
+        language = detect_language(output_dir)
+    registry_url = resolve_registry_url(cfg)
+    SEP = "+" + "-" * 49 + "+"
+    def row(label, value):
+        print(f"|  {label:<12}: {str(value)[:33]:<33}|")
+    print(SEP)
+    print("|        Golden CI/CD Generator                   |")
+    print(SEP)
+    row("App name",   cfg["app"]["name"])
+    row("Language",   language)
+    row("Cloud",      cfg["cloud"]["provider"])
+    row("Registry",   registry_url[:33])
+    row("K8s type",   cfg["kubernetes"].get("cluster_type", "generic"))
+    row("Evals",      "enabled" if cfg.get("evals", {}).get("enabled", True) else "disabled")
+    row("Output dir", str(output_dir)[:33])
+    print(SEP)
+
+
+def print_next_steps(app_name: str):
+    print("\nNext steps:")
+    print("  1. bash scripts/setup-secrets.sh    <- configure GitHub secrets")
+    print("  2. bash scripts/bootstrap-argocd.sh <- install ArgoCD + Argo Rollouts")
+    print("  3. git add . && git commit -m 'ci: add pipeline' && git push")
+    print(f"\n  Full guide: EXECUTION_GUIDE.md")
+    print(f"  Repo:       https://github.com/bonganiajay26/AGENTIC-CICD")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Golden CI/CD Generator")
-    parser.add_argument("--config", default="cicd.config.yaml", help="Path to config file")
-    parser.add_argument("--output", default=".", help="Output directory")
-    parser.add_argument("--detect", action="store_true", help="Show auto-detected values and exit")
-    parser.add_argument("--dry-run", action="store_true", help="Print files without writing")
+    parser = argparse.ArgumentParser(
+        description="Golden CI/CD Generator — any app, any cloud.",
+        epilog="Run without flags to generate from cicd.config.yaml. "
+               "Use --init for interactive setup wizard.",
+    )
+    parser.add_argument("--config",  default="cicd.config.yaml", help="Config file path")
+    parser.add_argument("--output",  default=".", help="Output directory")
+    parser.add_argument("--init",    action="store_true", help="Interactive setup wizard")
+    parser.add_argument("--detect",  action="store_true", help="Show detected values and exit")
+    parser.add_argument("--dry-run", action="store_true", help="Preview files without writing")
     args = parser.parse_args()
 
+    output_dir  = Path(args.output).resolve()
     config_path = Path(args.config)
+
+    # ── --init: run wizard, write config, then generate ───
+    if args.init:
+        cfg = wizard(output_dir, config_path)
+        print_banner(cfg, output_dir)
+        print("\nGenerating CI/CD pipeline files...")
+        gen = CICDGenerator(cfg, output_dir, dry_run=False)
+        gen.generate()
+        print_next_steps(cfg["app"]["name"])
+        return
+
+    # ── load existing config ───────────────────────────────
     if not config_path.exists():
-        print(f"ERROR: Config file not found: {config_path}", file=sys.stderr)
-        print("Run from project root or pass --config path/to/cicd.config.yaml", file=sys.stderr)
+        print(
+            f"\nNo cicd.config.yaml found.\n"
+            f"Run the interactive wizard:  python generate_cicd.py --init\n"
+            f"Or copy cicd.config.yaml template and edit it manually.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
 
-    output_dir = Path(args.output).resolve()
-
-    # Show detection results
-    language = cfg["app"].get("language", "auto")
-    if language == "auto":
-        language = detect_language(output_dir)
-    registry_url = resolve_registry_url(cfg)
-
-    SEP = "+" + "-" * 49 + "+"
-    def row(label, value):
-        line = f"|  {label:<12}: {str(value)[:33]:<33}|"
-        print(line)
-    print(SEP)
-    print("|        Golden CI/CD Generator                   |")
-    print(SEP)
-    row("App name",   cfg['app']['name'])
-    row("Language",   language)
-    row("Cloud",      cfg['cloud']['provider'])
-    row("Registry",   registry_url[:33])
-    row("K8s type",   cfg['kubernetes'].get('cluster_type','generic'))
-    row("Evals",      'enabled' if cfg.get('evals',{}).get('enabled',True) else 'disabled')
-    row("Output dir", str(output_dir)[:33])
-    print(SEP)
+    print_banner(cfg, output_dir)
 
     if args.detect:
         return
@@ -2113,11 +2346,10 @@ def main():
     gen = CICDGenerator(cfg, output_dir, dry_run=args.dry_run)
     gen.generate()
 
-    print(f"{'[DRY-RUN] ' if args.dry_run else ''}Generated {len(gen.files_written)} files.")
-    print("\nNext steps:")
-    print("  1. Set GitHub Actions secrets (see CLAUDE.md for full list)")
-    print("  2. Run: bash scripts/bootstrap-argocd.sh")
-    print("  3. Push to main — pipeline starts automatically")
+    prefix = "[DRY-RUN] " if args.dry_run else ""
+    print(f"{prefix}Generated {len(gen.files_written)} files.")
+    if not args.dry_run:
+        print_next_steps(cfg["app"]["name"])
 
 
 if __name__ == "__main__":
